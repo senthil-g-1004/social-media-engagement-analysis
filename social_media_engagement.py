@@ -1,69 +1,84 @@
 # 📊 Social Media Engagement Analysis Project
 
+
+# --------------------------
 # Step 1: Import Libraries
+# --------------------------
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
 
-# Show plots inline (for Jupyter)
-%matplotlib inline
+# --------------------------
+# Step 2: Load Dataset
+# --------------------------
+df = pd.read_csv("social_media_engagement_dataset.csv")
 
-# Step 2: Create Dummy Dataset
-data = {
-    "Post_ID": range(1, 11),
-    "User": ["Alice", "Bob", "Charlie", "David", "Eva",
-             "Alice", "Bob", "Charlie", "David", "Eva"],
-    "Likes": [120, 340, 560, 230, 150, 430, 210, 300, 90, 600],
-    "Comments": [15, 45, 60, 20, 10, 35, 25, 30, 5, 70],
-    "Shares": [12, 30, 40, 15, 8, 20, 10, 25, 4, 50]
-}
-
-df = pd.DataFrame(data)
-df["Total_Engagement"] = df["Likes"] + df["Comments"] + df["Shares"]
-
-# Save dataset to CSV
-df.to_csv("social_media_dataset.csv", index=False)
-
-print("✅ Dataset created and saved as social_media_dataset.csv")
+# Quick look at the dataset
+print("First 5 rows:")
 print(df.head())
 
-# Step 3: Summary Statistics
-print("\n📈 Summary Statistics:")
-print(df.describe())
+# --------------------------
+# Step 3: Data Cleaning
+# --------------------------
+# Replace 0 impressions with median to avoid divide by zero
+df["Impressions"] = df["Impressions"].replace(0, df["Impressions"].median())
 
-# Step 4: Average Engagement per User
-print("\n👥 Average Engagement per User:")
-user_avg = df.groupby("User")[["Likes", "Comments", "Shares", "Total_Engagement"]].mean()
-print(user_avg)
+# --------------------------
+# Step 4: Feature Engineering - Engagement Rate
+# --------------------------
+# Formula = (Likes + Comments + Shares) / Impressions * 100
+df["EngagementRate"] = ((df["Likes"] + df["Comments"] + df["Shares"]) / df["Impressions"]) * 100
 
-# Step 5: Find the Most Engaging Post
-print("\n🔥 Most Engaging Post:")
-print(df.loc[df["Total_Engagement"].idxmax()])
+# --------------------------
+# Step 5: Analysis using GroupBy
+# --------------------------
+# Average engagement per platform
+avg_platform = df.groupby("Platform")["EngagementRate"].mean().sort_values(ascending=False)
+print("\nAverage Engagement Rate by Platform:")
+print(avg_platform)
 
+# Average engagement per content type
+avg_content = df.groupby("ContentType")["EngagementRate"].mean().sort_values(ascending=False)
+print("\nAverage Engagement Rate by Content Type:")
+print(avg_content)
+
+# Best posting time
+avg_time = df.groupby("PostedTime")["EngagementRate"].mean().sort_values(ascending=False)
+print("\nAverage Engagement Rate by Posting Time:")
+print(avg_time)
+
+# --------------------------
 # Step 6: Visualizations
-
-## Total Likes by User
-sns.barplot(x="User", y="Likes", data=df, estimator=sum)
-plt.title("Total Likes by User")
+# --------------------------
+# Platform performance
+plt.figure(figsize=(6,4))
+avg_platform.plot(kind="bar", color="skyblue", edgecolor="black")
+plt.title("Average Engagement Rate by Platform")
+plt.ylabel("Engagement Rate (%)")
+plt.xlabel("Platform")
 plt.show()
 
-## Total Comments by User
-sns.barplot(x="User", y="Comments", data=df, estimator=sum)
-plt.title("Total Comments by User")
+# Content type performance
+plt.figure(figsize=(6,4))
+avg_content.plot(kind="bar", color="lightgreen", edgecolor="black")
+plt.title("Average Engagement Rate by Content Type")
+plt.ylabel("Engagement Rate (%)")
+plt.xlabel("Content Type")
 plt.show()
 
-## Total Shares by User
-sns.barplot(x="User", y="Shares", data=df, estimator=sum)
-plt.title("Total Shares by User")
+# Posting time performance
+plt.figure(figsize=(6,4))
+avg_time.plot(kind="bar", color="salmon", edgecolor="black")
+plt.title("Average Engagement Rate by Posting Time")
+plt.ylabel("Engagement Rate (%)")
+plt.xlabel("Time of Day")
 plt.show()
 
-## Total Engagement per Post
-plt.figure(figsize=(10,5))
-sns.barplot(x="Post_ID", y="Total_Engagement", data=df)
-plt.title("Total Engagement per Post")
-plt.show()
+# --------------------------
+# Step 7: Export Insights
+# --------------------------
+avg_platform.to_csv("avg_platform.csv")
+avg_content.to_csv("avg_content.csv")
+avg_time.to_csv("avg_time.csv")
 
-# Step 7: Save Final Results
-user_avg.to_csv("user_average_engagement.csv")
-print("\n💾 Results saved to user_average_engagement.csv")
+print("\nAnalysis complete! Charts displayed and results saved to CSV files.")
+
